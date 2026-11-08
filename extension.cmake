@@ -157,10 +157,11 @@ gufo_extension_target(
 
 # The model and family sources carry HIP overloads behind ENGINE_ENABLE_HIP,
 # which the in-tree targets get from gufo_core. gufo_ext_hip, present only in
-# HIP builds, supplies it here.
+# HIP builds, supplies it here. Compile-only: a loadable module resolves its
+# services from the gufo executable and must not link the static library.
 foreach(target strycast_q35_family strycast_q35)
   if(TARGET ${target} AND TARGET gufo_ext_hip)
-    target_link_libraries(${target} PRIVATE gufo_ext_hip)
+    target_link_libraries(${target} PRIVATE $<COMPILE_ONLY:gufo_ext_hip>)
   endif()
 endforeach()
 

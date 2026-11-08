@@ -38,6 +38,8 @@ void qwen38_flash_next_provider_register(strycast::ext::Registry& registry) {
           &strycast::models::qwen38_flash_next::RunQwen38FlashNextBenchmark,
       .prompt_driver = &strycast::models::qwen38_flash_next::RunFlashNextPrompt,
       .chat_driver = &strycast::models::qwen38_flash_next::RunFlashNextChat,
+      .sampling_defaults =
+          &strycast::models::qwen38_flash_next::FlashNextSamplingDefaults,
   });
 #endif
 }

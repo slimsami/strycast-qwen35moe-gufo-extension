@@ -47,6 +47,13 @@
       "commands": ["serve", "bench", "prompt"],
       "providers": ["qwen35moe"],
       "help": "MTP draft model path for speculative decoding"
+    },
+    {
+      "name": "--kv-cache",
+      "type": "string",
+      "commands": ["serve", "bench", "prompt"],
+      "providers": ["qwen35moe"],
+      "help": "Attention KV cache format: f16 (default) or q8_0, 8-bit with about half the KV memory"
     }
   ],
   "targets": {
