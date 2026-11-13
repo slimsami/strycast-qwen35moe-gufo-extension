@@ -37,6 +37,11 @@ void strycast_qwen35moe_provider_register(strycast::ext::Registry& registry) {
       .prompt_driver = &strycast::models::qwen::RunQwenPrompt,
       .chat_driver = &strycast::models::qwen::RunQwenChat,
       .sampling_defaults = &strycast::models::qwen::QwenSamplingDefaults,
+      .speculative_defaults = {{.backend = "dflash2",
+                                .max_draft_tokens = 7,
+                                .min_draft_tokens = 1,
+                                .draft_policy = "adaptive",
+                                .draft_policies = {"fixed", "adaptive"}}},
   });
 #endif
 }

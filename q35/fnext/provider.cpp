@@ -40,6 +40,9 @@ void qwen38_flash_next_provider_register(strycast::ext::Registry& registry) {
       .chat_driver = &strycast::models::qwen38_flash_next::RunFlashNextChat,
       .sampling_defaults =
           &strycast::models::qwen38_flash_next::FlashNextSamplingDefaults,
+      .speculative_defaults = {{.backend = "mtp",
+                                .max_draft_tokens = 7,
+                                .min_draft_tokens = 1}},
   });
 #endif
 }
