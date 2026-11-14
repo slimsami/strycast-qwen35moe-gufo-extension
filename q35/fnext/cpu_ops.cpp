@@ -69,6 +69,12 @@ void DequantizeRow(const TensorRef& t, std::uint64_t e, std::uint64_t row,
     case GgmlType::kIQ4_NL:
       strycast::quant::DequantizeIQ4_NL(src, out, k);
       break;
+    case GgmlType::kIQ4_XS:
+      strycast::quant::DequantizeIQ4_XS(src, out, k);
+      break;
+    case GgmlType::kIQ3_S:
+      strycast::quant::DequantizeIQ3_S(src, out, k);
+      break;
     case GgmlType::kQ4_K:
       strycast::quant::DequantizeQ4_K(src, out, k);
       break;

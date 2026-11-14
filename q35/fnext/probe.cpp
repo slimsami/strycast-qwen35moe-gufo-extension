@@ -4,8 +4,14 @@
 #include <algorithm>
 #include <array>
 #include <charconv>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <map>
+#include <optional>
 #include <string>
+
+#include "q35/fnext/weights.hpp"
 
 namespace strycast::models::qwen38_flash_next {
 
@@ -24,9 +30,14 @@ bool ProbeFlashNextGguf(const core::GgufReader& reader) {
   const auto trunk_layers = *block_count - nextn_layers;
   // Check only canonical weights bound by ModelWeights::Bind. Appended MTP
   // layers and unrelated tensors are not loaded as part of the trunk.
-  static constexpr std::array<core::GgmlType, 5> kExpertFormats = {
-      core::GgmlType::kQ4_K, core::GgmlType::kQ5_K, core::GgmlType::kQ6_K,
-      core::GgmlType::kQ5_1, core::GgmlType::kQ8_0};
+  static constexpr std::array<core::GgmlType, 8> kExpertFormats = {
+      core::GgmlType::kQ4_K,   core::GgmlType::kQ5_K,  core::GgmlType::kQ6_K,
+      core::GgmlType::kQ5_1,   core::GgmlType::kQ8_0,  core::GgmlType::kIQ3_S,
+      core::GgmlType::kIQ4_XS, core::GgmlType::kIQ4_NL};
+  // Gate, up and down formats of the layers present, for the IQ layout rule.
+  // Nothing is sized from block_count, which a corrupt file can inflate.
+  std::map<std::uint32_t, std::array<std::optional<core::GgmlType>, 3>>
+      layer_formats;
   for (const auto& tensor : reader.GetTensors()) {
     auto name = tensor.name;
     if (!name.starts_with("blk.")) {
@@ -41,16 +52,26 @@ bool ProbeFlashNextGguf(const core::GgufReader& reader) {
       continue;
     }
     name.remove_prefix(end - name.data());
-    if (name != ".ffn_gate_exps.weight" && name != ".ffn_up_exps.weight" &&
-        name != ".ffn_down_exps.weight") {
+    const std::size_t role = name == ".ffn_gate_exps.weight"   ? 0
+                             : name == ".ffn_up_exps.weight"   ? 1
+                             : name == ".ffn_down_exps.weight" ? 2
+                                                               : 3;
+    if (role == 3) {
       continue;
     }
     if (std::find(kExpertFormats.begin(), kExpertFormats.end(), tensor.type) ==
         kExpertFormats.end()) {
       return false;
     }
+    layer_formats[layer][role] = tensor.type;
   }
-  return true;
+  // The loader diagnoses missing experts; only complete layers are checked.
+  return std::all_of(
+      layer_formats.begin(), layer_formats.end(), [](const auto& entry) {
+        const auto& formats = entry.second;
+        return !formats[0] || !formats[1] || !formats[2] ||
+               IqExpertFormatsSupported(*formats[0], *formats[1], *formats[2]);
+      });
 }
 
 std::optional<sampling::TextSamplingDefaults> FlashNextSamplingDefaults() {
